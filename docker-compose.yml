@@ -2,6 +2,8 @@ networks:
   sonarqube_network:
     name: sonarqube_network
     driver: bridge
+  traefik_frontend:
+    external: true
 
 services:
   db:
@@ -25,8 +27,7 @@ services:
     restart: always
     networks:
       - sonarqube_network
-    ports:
-      - "9000:9000"
+      - traefik_frontend
     environment:
       - SONAR_JDBC_URL=jdbc:postgresql://db:5432/sonar
       - SONAR_JDBC_USERNAME=sonar
@@ -36,9 +37,15 @@ services:
       - sonarqube_logs:/opt/sonarqube/logs
       - sonarqube_extensions:/opt/sonarqube/extensions
       - sonarqube_temp:/opt/sonarqube/temp
-    # Wichtig für Elasticsearch 8+ Anforderungen
     tmpfs:
       - /tmp:size=256M,mode=1777
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonarqube.rule=Host(`sonar.yourdomain.com`)"
+      - "traefik.http.services.sonarqube.loadbalancer.server.port=9000"
+      # Uncomment below if your Traefik handles HTTPS via a static config file
+      # - "traefik.http.routers.sonarqube.entrypoints=websecure"
+      # - "traefik.http.routers.sonarqube.tls=true"
 
 volumes:
   postgresql_data:
