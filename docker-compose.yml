@@ -18,7 +18,7 @@ services:
       - postgresql_data:/var/lib/postgresql/data
 
   sonarqube:
-    image: sonarqube:2025.1-community
+    image: sonarqube:community
     container_name: sonarqube_app
     depends_on:
       - db
