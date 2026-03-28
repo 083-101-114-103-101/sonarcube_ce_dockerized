@@ -1,10 +1,6 @@
-# sonarcube_ce_dockerized
-This setup deploys a SonarQube Community Build instance (Version 2025.x) using PostgreSQL 15 as the backend database. It is configured to run on a Linux host that also houses a GitLab Runner, allowing for high-speed, internal container-to-container communication.
-
-
 # SonarQube Community Build with PostgreSQL
 
-This project provides a production-ready **SonarQube Community Build (2025.x)** environment using **PostgreSQL 15** as a database backend. It is optimized for high-speed, internal communication with a **GitLab Runner** located on the same host.
+This project provides a production-ready **SonarQube Community Build (2025.x)** environment using **PostgreSQL 15**. It is optimized for internal communication with a **GitLab Runner** located on the same host.
 
 ---
 
@@ -42,66 +38,26 @@ Apply the file: `sudo sysctl -p`
 
 ---
 
-## 🚀 Step 2: Deployment with Docker Compose
+## 🚀 Step 2: Deployment
 
-Create a directory (e.g., `~/sonarqube`) and save the following content as `docker-compose.yml`.
+**Repo:** [083-101-114-103-101/sonarcube_ce_dockerized](https://github.com/083-101-114-103-101/sonarcube_ce_dockerized)
 
-### 2.1 The Docker Compose File
+### 2.1 Clone and Prepare
+```bash
+# Clone the repository
+git clone https://github.com/083-101-114-103-101/sonarcube_ce_dockerized.git
 
-```yaml
-networks:
-  sonarqube_network:
-    name: sonarqube_network
-    driver: bridge
+# Enter the directory
+cd sonarcube_ce_dockerized
 
-services:
-  db:
-    image: postgres:15
-    container_name: sonarqube_db
-    restart: always
-    networks:
-      - sonarqube_network
-    environment:
-      - POSTGRES_USER=sonar
-      - POSTGRES_PASSWORD=sonar
-      - POSTGRES_DB=sonar
-    volumes:
-      - postgresql_data:/var/lib/postgresql/data
-
-  sonarqube:
-    image: sonarqube:2025.1-community
-    container_name: sonarqube_app
-    depends_on:
-      - db
-    restart: always
-    networks:
-      - sonarqube_network
-    ports:
-      - "9000:9000"
-    environment:
-      - SONAR_JDBC_URL=jdbc:postgresql://db:5432/sonar
-      - SONAR_JDBC_USERNAME=sonar
-      - SONAR_JDBC_PASSWORD=sonar
-    volumes:
-      - sonarqube_data:/opt/sonarqube/data
-      - sonarqube_logs:/opt/sonarqube/logs
-      - sonarqube_extensions:/opt/sonarqube/extensions
-      - sonarqube_temp:/opt/sonarqube/temp
-    # Required for Elasticsearch 8.x stability
-    tmpfs:
-      - /tmp:size=256M,mode=1777
-
-volumes:
-  postgresql_data:
-  sonarqube_data:
-  sonarqube_logs:
-  sonarqube_extensions:
-  sonarqube_temp:
+# Ensure you are on the correct revision
+git checkout 90200c46e2e5695f60e54bbc187cbcc0cef270bd
 ```
 
 ### 2.2 Start the Stack
-Run:
+The configuration uses this [docker-compose.yml](https://github.com/083-101-114-103-101/sonarcube_ce_dockerized/blob/90200c46e2e5695f60e54bbc187cbcc0cef270bd/docker-compose.yml) to orchestrate SonarQube and PostgreSQL.
 
+Run:
 ```bash
 docker compose up -d
 ```
@@ -113,7 +69,7 @@ Access the interface at **http://localhost:9000**.
 
 ## 🦊 Step 3: GitLab Runner Integration
 
-Since the GitLab Runner is on the same host, we connect it to the `sonarqube_network` to allow internal container-to-container communication.
+Since the GitLab Runner is on the same host, we connect it to the internal network defined in the compose file (`sonarqube_network`).
 
 ### 3.1 Update GitLab Runner Config
 Edit your `/etc/gitlab-runner/config.toml`:
@@ -131,12 +87,10 @@ Restart the runner: `sudo gitlab-runner restart`
 
 ### 3.2 Configure GitLab CI/CD Variables
 In your GitLab project (**Settings > CI/CD > Variables**), add:
-* `SONAR_HOST_URL`: `http://sonarqube_app:9000` (Internal DNS name)
+* `SONAR_HOST_URL`: `http://sonarqube:9000` (Internal DNS name from the compose file)
 * `SONAR_TOKEN`: (Generate in SonarQube: *My Account > Security > Tokens*)
 
 ### 3.3 Example Pipeline (`.gitlab-ci.yml`)
-Add this to your repository:
-
 ```yaml
 sonarqube-check:
   stage: test
@@ -146,10 +100,6 @@ sonarqube-check:
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
     GIT_DEPTH: "0"
-  cache:
-    key: "${CI_JOB_NAME}"
-    paths:
-      - .sonar/cache
   script: 
     - sonar-scanner -Dsonar.projectKey=Your_Project_Key -Dsonar.sources=.
   allow_failure: true
@@ -157,10 +107,9 @@ sonarqube-check:
 
 ---
 
-## 🛠 Step 4: Troubleshooting & Maintenance
+## 🛠 Step 4: Maintenance
 
 * **Check Logs:** `docker compose logs -f sonarqube`
-* **Restart Services:** `docker compose restart`
-* **Clean Removal (Data Loss!):** `docker compose down -v`
-* **Internal Connectivity Test:** To verify the runner sees Sonar, run:
-  `docker exec -it <runner_container_id> ping sonarqube_app`
+* **Stop Services:** `docker compose stop`
+* **Internal Connectivity Test:** `docker exec -it <runner_container_id> ping sonarqube`
+
