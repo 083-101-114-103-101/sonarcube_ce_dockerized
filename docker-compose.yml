@@ -45,6 +45,7 @@ services:
       - "traefik.http.routers.sonarqube.entrypoints=websecure"
       - "traefik.http.routers.sonarqube.tls=true"
       - "traefik.http.services.sonarqube.loadbalancer.server.port=9000"
+      - "traefik.docker.network=traefik_frontend"
 
 volumes:
   postgresql_data:
