@@ -28,8 +28,8 @@ services:
     networks:
       - sonarqube_network
       - traefik_frontend
-    # ports:
-      # - "9000:9000"
+    ports:
+      - "9000:9000"
     environment:
       - SONAR_JDBC_URL=jdbc:postgresql://db:5432/sonar
       - SONAR_JDBC_USERNAME=sonar
