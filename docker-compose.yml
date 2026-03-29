@@ -43,7 +43,7 @@ services:
       - /tmp:size=256M,mode=1777
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.sonarqube.rule=Host(`sonar.selfsigned.ch`)"
+      - "traefik.http.routers.sonarqube.rule=Host(`sonar.yourdomain.com`)"
       - "traefik.http.routers.sonarqube.entrypoints=websecure"
       - "traefik.http.routers.sonarqube.tls=true"
       - "traefik.http.services.sonarqube.loadbalancer.server.port=9000"
