@@ -49,9 +49,6 @@ git clone https://github.com/083-101-114-103-101/sonarcube_ce_dockerized.git
 
 # Enter the directory
 cd sonarcube_ce_dockerized
-
-# Ensure you are on the correct revision
-git checkout 90200c46e2e5695f60e54bbc187cbcc0cef270bd
 ```
 
 ### 2.2 Start the Stack
